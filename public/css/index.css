@@ -1,0 +1,158 @@
+* {
+    box-sizing: border-box;
+    border-radius: 3px;
+  }
+  
+  body {
+    font-family: "Roboto", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 90%;
+  }
+  header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    text-align: center;
+  }
+  h1{
+    text-align: center;
+  }
+  .logo{
+    padding-top: 15px;  
+  }
+  .logo > img {
+    width: 50px;
+  }
+  .navbar{
+    overflow: auto;
+    text-align: end;
+    background-color: #585555;
+  }
+  .hamburger{
+    color: white;
+    padding: 5px;
+  }
+  .menu{
+    display: none;
+  }
+  
+  
+  main{
+    padding: 2% 5%;
+    height: 80%;
+  }
+  section{
+    border: 1px solid gray;
+    padding: 10px;
+    margin: 1px;
+    text-align: center;
+  }
+  p{
+    text-align: left;
+  }
+  .social{
+    padding: 10px;
+    margin: 1px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    list-style: none;
+  }
+  .social_icon{
+    width: 45;
+  }
+  footer{
+    border-top: 1px solid gray;
+    background-color: white;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    
+  }
+  
+  @media (max-width : 400px){
+    header{
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+    }
+    footer{
+      border-top: none;
+      margin: 2px;
+      padding: 0% 25%;
+      justify-content: space-around;
+    }
+  }
+  @media (min-width : 401px) and (max-width : 990px){
+    h1{
+      width: 67%;
+      text-align: left;
+    }
+    .logo{
+      width: 33%;
+    }
+  }
+  @media (min-width : 991px){
+    .hamburger{
+      display: none;
+    }
+    .menu{
+      display: flex;
+      justify-content: end;
+     
+    }
+    .menu>li{
+      list-style: none;
+      float: right;
+      margin: 0;
+      padding: 0px 20px;
+      color: white;
+    }
+    h1{
+      width: 67%;
+      text-align: left;
+    }
+    .logo{
+      width: 33%;
+    }
+    main{
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around; 
+      margin: 0;
+      padding: 5px 10px;
+    }
+    section{
+      justify-content: space-around;
+      margin: 0;
+    }
+    .product{
+      width: 30%;
+    }
+  
+  }
+form{
+    border: 1px black solid;
+    padding: 15px;
+    margin: 5px;
+}
+input{
+    /*padding: 15px;*/
+    margin: 2px;
+}
+div{
+    border: 1px black solid;
+    padding: 5px;
+    margin: 2px;
+}
+section{
+    border: 1px black solid;
+    padding: 20px;
+    margin: 5px;
+}
+ul{
+    
+}

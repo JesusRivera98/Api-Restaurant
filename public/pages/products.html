@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Products App</title>
+        <link href="/css/index.css" rel="stylesheet" type="text/css" />
+    </head>
+    <script>
+        function goToHome() {
+            window.location.assign("/index.html")
+        }
+        function goToClients() {
+            window.location.assign("/pages/clients.html")
+        }
+        function goToUsers() {
+            window.location.assign("/pages/Users.html")
+        }
+        function goToProducts() {
+            window.location.assign("/pages/products.html")
+        }
+        function goToBills() {
+            window.location.assign("/pages/bills.html")
+        }
+    </script>
+
+    
+    <body>
+        <nav class="navbar">
+            <div class="hamburger">&#9776;</div>
+            <ul class="menu">
+                <li onclick = "goToHome()" >Home</li>
+                <li onclick = "goToUsers()" >Users</li>
+                <li onclick = "goToBills()" >Bills</li>
+                <li onclick = "goToProducts()" >Products</li>
+                <li onclick = "goToClients()" >Clients</li>
+            </ul>
+        </nav>
+        <main>
+            <section>
+                <form class="products-form">
+                    <label>                    
+                        Click the buttton to get the full list of products <br/>
+                    </label>
+                    <button id="submit-btn" type="submit">
+                        Get products
+                    </button>
+                </form>
+            
+                <form class="add-product-form">
+                    <label>
+                        Click the buttton to add a product <br/>
+                    </label>
+                    <label for="productName">
+                        Name:
+                    </label>
+                    <input type="text" id="productName" />
+                    <label for="productDescription">
+                        Description:
+                    </label>
+                    <input type="text" id="productDescription" />
+                    <label for="productUnit">
+                        Unidd:
+                    </label>
+                    <input type="text" id="productUnit" />
+                    <label for="productCost">
+                        Cost:
+                    </label>
+                    <input type="text" id="productCost" />
+                    <label for="productPrice">
+                        Price:
+                    </label>
+                    <input type="number" id="productPrice" />
+                    <label for="productStock">
+                        Stock:
+                    </label>
+                    <input type="number" id="productStock" />
+                    <button type="submit">
+                        Add product
+                    </button>
+                </form>
+            
+                <form class="delete-product-form">
+                    <label>
+                        Click the buttton to delete the products by id <br/>
+                    </label>
+                    <label for="productIdToDelete">
+                        Id:
+                    </label>
+                    <input type="text" id="productIdToDelete" />
+                    <button type="submit" id="deleteSubmit">
+                        Delete product
+                    </button>
+                </form>
+            
+                <form class="update-product-form">
+                    <label>
+                        Click the buttton to update products by id <br/>
+                    </label>
+            
+                    <label for="updateProductName">
+                        Name:
+                    </label>
+                    <input type="text" id="updateProductName" />
+            
+                    <label for="updateProductDescription">
+                        Description:
+                    </label>
+                    <input type="text" id="updateProductDescription" />
+            
+                    <label for="updateProductUnit">
+                        Unit:
+                    </label>
+                    <input type="text" id="updateProductUnit" />
+            
+                    <label for="updateProductCost">
+                        Cost:
+                    </label>
+                    <input type="number" id="updateProductCost" />
+            
+                    <label for="updateProductPrice">
+                        Price:
+                    </label>
+                    <input type="number" id="updateProductPrice" />
+
+                    <label for="updateProductStock">
+                        Stock:
+                    </label>
+                    <input type="number" id="updateProductStock" />
+            
+                    <button type="submit">
+                        Update product
+                    </button>
+                    <label for="productIdToUpdate">
+                        Id:
+                    </label>
+                    <input type="text" id="productIdToUpdate" />
+                </form>
+            
+                <form class="get-named-products-form">
+                    <label>
+                        Click the buttton to get the list of products with a specific Name <br/>
+                    </label>
+            
+                    <label for="productNameToGet">
+                        Nombre:
+                    </label>
+                    <input type="text" id="productNameToGet" />                    
+                    <button type="submit">
+                        Get products
+                    </button>
+                </form>
+            </section>
+            <section class="results"></section>
+        </main>      
+        <script src="/js/products.js"></script>
+    </body>
+
+</html>

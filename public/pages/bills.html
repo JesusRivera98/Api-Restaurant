@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Bills App</title>
+        <link href="/css/index.css" rel="stylesheet" type="text/css" />
+    </head>
+    <script>
+        function goToHome() {
+            window.location.assign("/index.html")
+        }
+        function goToUsers() {
+            window.location.assign("/pages/users.html")
+        }
+        function goToClients() {
+            window.location.assign("/pages/clients.html")
+        }
+        function goToBills() {
+            window.location.assign("/pages/bills.html")
+        }
+        function goToProducts() {
+            window.location.assign("/pages/products.html")
+        }
+    </script>
+
+    
+    <body>
+        <nav class="navbar">
+            <div class="hamburger">&#9776;</div>
+            <ul class="menu">
+                <li onclick = "goToHome()" >Home</li>
+                <li onclick = "goToUsers()" >Users</li>
+                <li onclick = "goToBills()" >Bills</li>
+                <li onclick = "goToProducts()" >Products</li>
+                <li onclick = "goToClients()" >Clients</li>
+            </ul>
+        </nav>
+        <main>
+            <section>
+                <form class="bills-form">
+                    <label>                    
+                        Click the buttton to get the full list of bills <br/>
+                    </label>
+                    <button id="submit-btn" type="submit">
+                        Get bills
+                    </button>
+                </form>
+            
+                <form class="add-bill-form">
+                    <label>
+                        Click the buttton to add a bill <br/>
+                    </label>
+                    <label for="billDate">
+                        Date:
+                    </label>
+                    <input type="date" id="billDate" />
+                    <label for="billClient">
+                        Client:
+                    </label>
+                    <input type="text" id="billClient" />
+                    <label for="billTable">
+                        Table:
+                    </label>
+                    <input type="text" id="billTable" />
+                    <label for="billTotal">
+                        Total:
+                    </label>
+                    <input type="text" id="billTotal" />
+                    <label for="billWaiter">
+                        Waiter:
+                    </label>
+                    <input type="text" id="billWaiter" />
+                    <button type="submit">
+                        Add bill
+                    </button>
+                </form>
+            
+                <form class="delete-bill-form">
+                    <label>
+                        Click the buttton to delete the bills by id <br/>
+                    </label>
+                    <label for="billIdToDelete">
+                        Id:
+                    </label>
+                    <input type="text" id="billIdToDelete" />
+                    <button type="submit" id="deleteSubmit">
+                        Delete bill
+                    </button>
+                </form>
+            
+                <form class="update-bill-form">
+                    <label>
+                        Click the buttton to update bills by id <br/>
+                    </label>
+            
+                    <label for="updateBillDate">
+                        Date:
+                    </label>
+                    <input type="date" id="updateBillDate" />
+            
+                    <label for="updateBillClient">
+                        Client:
+                    </label>
+                    <input type="text" id="updateBillClient" />
+            
+                    <label for="updateBillTable">
+                        Table:
+                    </label>
+                    <input type="text" id="updateBillTable" />
+            
+                    <label for="updateBillTotal">
+                        Total:
+                    </label>
+                    <input type="text" id="updateBillTotal" />
+            
+                    <label for="updateBillWaiter">
+                        waiter:
+                    </label>
+                    <input type="text" id="updateBillWaiter" />
+            
+                    <button type="submit">
+                        Update bill
+                    </button>
+                    <label for="billIdToUpdate">
+                        Id:
+                    </label>
+                    <input type="text" id="billIdToUpdate" />
+                </form>
+
+                <form class="add-bill-product-form">   
+                    <label>
+                        Click the button to add a product to the bill<br/>
+                    </label>                 
+                    <label for="productIdToAdd">
+                        Product ID:
+                    </label>
+                    <input type="text" id="productIdToAdd">
+                    <label for="productQuantityToAdd">
+                        Quantity:
+                    </label>
+                    <input type="text" id="productQuantityToAdd">
+                    <label for="productNotesToAdd">
+                        Notes:
+                    </label>
+                    <input type="text" id="productNotesToAdd">
+                    <label for="billIdToAddProduct">
+                        Bill ID:
+                    </label>
+                    <input type="text" id="billIdToAddProduct">
+                    <button type="submit">
+                        Add product
+                    </button>
+
+                </form>
+                <form class="update-bill-product-quantity-form">
+                    <label>
+                        Click the button to update a product's quantity from the bill<br/>
+                    </label>
+                    <label for="productQuantityToUpdate">
+                        Quantity:
+                    </label>
+                    <input type="text" id="productQuantityToUpdate">
+                    <label for="productIdToUpdate">
+                        Product ID:
+                    </label>
+                    <input type="text" id="productIdToUpdate">
+                    <label for="billIdToUpdateProduct">
+                        Bill ID:
+                    </label>
+                    <input type="text" id="billIdToUpdateProduct">
+                    <button type="submit">
+                        Update Quantity
+                    </button>
+                </form>
+            
+                <form class="get-dated-bills-form">
+                    <label>
+                        Click the buttton to get the list of bills with a specific date <br/>
+                    </label>            
+                    <label for="billDateToGet">
+                        Fecha:
+                    </label>
+                    <input type="date" id="billDateToGet" />
+                    <button type="submit">
+                        Get bills
+                    </button>
+                </form>
+                <form class="get-cliented-bills-form">
+                    <label>
+                        Click the buttton to get the list of bills with a specific client <br/>
+                    </label>
+                    <label for="billClientToGet">
+                        Cliente:
+                    </label>
+                    <input type="text" id="billClientToGet" />
+                    <button type="submit">
+                        Get bills
+                    </button>
+                </form>
+                <form class="get-waitered-bills-form">
+                    <label>
+                        Click the buttton to get the list of bills with a specific waiter <br/>
+                    </label>
+                    <label for="billWaiterToGet">
+                        Mesero:
+                    </label>
+                    <input type="text" id="billWaiterToGet" />
+                    <button type="submit">
+                        Get bills
+                    </button>
+                </form>
+            </section>
+            <section class="results"></section>
+        </main>      
+        <script src="/js/bills.js"></script>
+    </body>
+
+</html>

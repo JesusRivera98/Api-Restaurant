@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Clients App</title>
+        <link href="/css/index.css" rel="stylesheet" type="text/css" />
+    </head>
+    <script>
+        function goToHome() {
+            window.location.assign("/index.html")
+        }
+        function goToUsers() {
+            window.location.assign("/pages/clients.html")
+        }
+        function goToClients() {
+            window.location.assign("/pages/clients.html")
+        }
+        function goToProducts() {
+            window.location.assign("/pages/products.html")
+        }
+        function goToBills() {
+            window.location.assign("/pages/bills.html")
+        }
+    </script>
+
+    
+    <body>
+        <nav class="navbar">
+            <div class="hamburger">&#9776;</div>
+            <ul class="menu">
+                <li onclick = "goToHome()" >Home</li>
+                <li onclick = "goToUsers()" >Users</li>
+                <li onclick = "goToBills()" >Bills</li>
+                <li onclick = "goToProducts()" >Products</li>
+                <li onclick = "goToClients()" >Clients</li>
+            </ul>
+        </nav>
+        <main>
+            <section>
+                <form class="clients-form">
+                    <label>                    
+                        Click the buttton to get the full list of clients <br/>
+                    </label>
+                    <button id="submit-btn" type="submit">
+                        Get clients
+                    </button>
+                </form>
+            
+                <form class="add-client-form">
+                    <label>
+                        Click the buttton to add a client <br/>
+                    </label>
+                    <label for="clientfirstName">
+                        firstName:
+                    </label>
+                    <input type="text" id="clientfirstName" />
+                    <label for="clientlastName">
+                        lastName:
+                    </label>
+                    <input type="text" id="clientlastName" />
+                    <label for="clientRFC">
+                        RFC:
+                    </label>
+                    <input type="text" id="clientRFC" />
+                    <label for="clientEmail">
+                        Email:
+                    </label>
+                    <input type="text" id="clientEmail" />
+                    <label for="clientAddress">
+                        Address:
+                    </label>
+                    <input type="password" id="clientAddress" />
+                    <label for="clientAddress">
+                        Alias:
+                    </label>
+                    <input type="text" id="clientAlias" />
+                    <button type="submit">
+                        Add client
+                    </button>
+                </form>
+            
+                <form class="delete-client-form">
+                    <label>
+                        Click the buttton to delete the clients by id <br/>
+                    </label>
+                    <label for="clientIdToDelete">
+                        Id:
+                    </label>
+                    <input type="text" id="clientIdToDelete" />
+                    <button type="submit" id="deleteSubmit">
+                        Delete client
+                    </button>
+                </form>
+            
+                <form class="update-client-form">
+                    <label>
+                        Click the buttton to update clients by id <br/>
+                    </label>
+            
+                    <label for="updateClientfirstName">
+                        firstName:
+                    </label>
+                    <input type="text" id="updateClientfirstName" />
+            
+                    <label for="updateClientlastName">
+                        lastName:
+                    </label>
+                    <input type="text" id="updateClientlastName" />
+            
+                    <label for="updateClientRFC">
+                        RFC:
+                    </label>
+                    <input type="text" id="updateClientRFC" />
+            
+                    <label for="updateClientEmail">
+                        Email:
+                    </label>
+                    <input type="text" id="updateClientEmail" />
+            
+                    <label for="updateClientAddress">
+                        Address:
+                    </label>
+                    <input type="text" id="updateClientAddress" />
+            
+                    <label for="updateClientAlias">
+                        Alias:
+                    </label>
+                    <input type="text" id="updateClientAlias" />
+                    <button type="submit">
+                        Update client
+                    </button>
+                    <label for="clientIdToUpdate">
+                        Id:
+                    </label>
+                    <input type="text" id="clientIdToUpdate" />
+                </form>
+            
+                <form class="get-named-clients-form">
+                    <label>
+                        Click the buttton to get the list of clients with a specific Name <br/>
+                    </label>
+            
+                    <label for="clientfirstNameToGet">
+                        Nombre:
+                    </label>
+                    <input type="text" id="clientfirstNameToGet" />
+                    <label for="clientlastNameToGet">
+                        Apellido:
+                    </label>
+                    <input type="text" id="clientlastNameToGet" />
+                    <button type="submit">
+                        Get clients
+                    </button>
+                </form>
+                <form class="get-firstNamed-clients-form">
+                    <label>
+                        Click the buttton to get the list of clients with a specific Name <br/>
+                    </label>
+            
+                    <label for="clientfirstNameToGetf">
+                        Nombre:
+                    </label>
+                    <input type="text" id="clientfirstNameToGetf" />
+                    <button type="submit">
+                        Get clients
+                    </button>
+                </form>
+                <form class="get-lastNamed-clients-form">
+                    <label>
+                        Click the buttton to get the list of clients with a specific Name <br/>
+                    </label>
+            
+                    <label for="clientlastNameToGetl">
+                        Apellido:
+                    </label>
+                    <input type="text" id="clientlastNameToGetl" />
+                    <button type="submit">
+                        Get clients
+                    </button>
+                </form>
+                <form class="get-aliased-clients-form">
+                    <label>
+                        Click the buttton to get the list of clients with a specific Name <br/>
+                    </label>
+            
+                    <label for="clientAliasToGet">
+                        Alias:
+                    </label>
+                    <input type="text" id="clientAliasToGet" />
+                    <button type="submit">
+                        Get clients
+                    </button>
+                </form>
+            </section>
+            <section class="results"></section>
+        </main>      
+        <script src="/js/clients.js"></script>
+    </body>
+
+</html>

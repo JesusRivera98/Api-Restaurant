@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Users App</title>
+        <link href="/css/index.css" rel="stylesheet" type="text/css" />
+    </head>
+    <script>
+        function goToHome() {
+            window.location.assign("/index.html")
+        }
+        function goToClients() {
+            window.location.assign("/pages/clients.html")
+        }
+        function goToUsers() {
+            window.location.assign("/pages/users.html")
+        }
+        function goToProducts() {
+            window.location.assign("/pages/products.html")
+        }
+        function goToBills() {
+            window.location.assign("/pages/bills.html")
+        }
+    </script>
+
+    
+    <body>
+        <nav class="navbar">
+            <div class="hamburger">&#9776;</div>
+            <ul class="menu">
+                <li onclick = "goToHome()" >Home</li>
+                <li onclick = "goToUsers()" >Users</li>
+                <li onclick = "goToBills()" >Bills</li>
+                <li onclick = "goToProducts()" >Products</li>
+                <li onclick = "goToClients()" >Clients</li>
+            </ul>
+        </nav>
+        <main>
+            <section>
+                <form class="users-form">
+                    <label>                    
+                        Click the buttton to get the full list of users <br/>
+                    </label>
+                    <button id="submit-btn" type="submit">
+                        Get users
+                    </button>
+                </form>
+            
+                <form class="add-user-form">
+                    <label>
+                        Click the buttton to add a user <br/>
+                    </label>
+                    <label for="userfirstName">
+                        firstName:
+                    </label>
+                    <input type="text" id="userfirstName" />
+                    <label for="userlastName">
+                        lastName:
+                    </label>
+                    <input type="text" id="userlastName" />
+                    <label for="userLevel">
+                        Level:
+                    </label>
+                    <input type="text" id="userLevel" />
+                    <label for="userEmail">
+                        Email:
+                    </label>
+                    <input type="text" id="userEmail" />
+                    <label for="userPassword">
+                        Password:
+                    </label>
+                    <input type="password" id="userPassword" />
+                    <button type="submit">
+                        Add user
+                    </button>
+                </form>
+            
+                <form class="delete-user-form">
+                    <label>
+                        Click the buttton to delete the users by id <br/>
+                    </label>
+                    <label for="userIdToDelete">
+                        Id:
+                    </label>
+                    <input type="text" id="userIdToDelete" />
+                    <button type="submit" id="deleteSubmit">
+                        Delete user
+                    </button>
+                </form>
+            
+                <form class="update-user-form">
+                    <label>
+                        Click the buttton to update users by id <br/>
+                    </label>
+            
+                    <label for="updateUserfirstName">
+                        firstName:
+                    </label>
+                    <input type="text" id="updateUserfirstName" />
+            
+                    <label for="updateUserlastName">
+                        lastName:
+                    </label>
+                    <input type="text" id="updateUserlastName" />
+            
+                    <label for="updateUserLevel">
+                        Level:
+                    </label>
+                    <input type="text" id="updateUserLevel" />
+            
+                    <label for="updateUserEmail">
+                        Email:
+                    </label>
+                    <input type="text" id="updateUserEmail" />
+            
+                    <label for="updateUserPassword">
+                        Password:
+                    </label>
+                    <input type="password" id="updateUserPassword" />
+            
+                    <button type="submit">
+                        Update user
+                    </button>
+                    <label for="userIdToUpdate">
+                        Id:
+                    </label>
+                    <input type="text" id="userIdToUpdate" />
+                </form>
+            
+                <form class="get-firstNamed-users-form">
+                    <label>
+                        Click the buttton to get the list of users with a specific Name <br/>
+                    </label>
+            
+                    <label for="userfirstNameToGet">
+                        Nombre:
+                    </label>
+                    <input type="text" id="userfirstNameToGet" />
+                    <label for="userlastNameToGet">
+                        Apellido:
+                    </label>
+                    <input type="text" id="userlastNameToGet" />
+                    <button type="submit">
+                        Get users
+                    </button>
+                </form>
+            </section>
+            <section class="results"></section>
+        </main>      
+        <script src="/js/users.js"></script>
+    </body>
+
+</html>
