@@ -5,13 +5,15 @@ const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
 const jsonwebtoken = require('jsonwebtoken');
 const validateToken = require('./middleware/validateToken');
+const validateSessionToken = require('./middleware/validateSessionToken');
 
 const mongoose = require('mongoose');
 const { Bookmarks } = require('./models/bookmarksModel');
+const { Comments } = require('./models/commentsModel');
 const { Users } = require('./models/usersModel');
 const { Clients } = require('./models/clientsModel');
 const { Products } = require('./models/productsModel');
-const { Bills } = require('./models/billsModel')
+const { Bills, BillsClient } = require('./models/billsModel')
 const { DATABASE_URL, PORT, SECRET_TOKEN } = require('./config');
 const cors = require('./middleware/cors');
 
@@ -132,15 +134,10 @@ app.get('/user', (req, res) => {
             return res.status(500).end();
         })
 });
-//User new user
-app.post('/users', jsonParser, (req, res) => {
+//Add new user
+app.post('/users', jsonParser, validateSessionToken, (req, res) => {
     console.log('adding an user')
-    let {firstName, lastName, level, email, password} = req.body;
-    /*let firstName = req.body.firstName;
-    let lastName = req.body.lastName;
-    let level = req.body.level;
-    let email = req.body.email;
-    let password = req.body.password;*/
+    let { firstName, lastName, level, email, password } = req.body;
 
     if (!firstName || !lastName || !level || !password) {
         res.statusMessage = "All parameters: 'firstName', 'lastName', 'level' and 'password' must be sent in the body.";
@@ -280,15 +277,23 @@ app.patch('/user/:id', jsonParser, (req, res) => {
             })
     }
     if (password) {
-        Users
-            .updateUserPassword(id, password)
-            .then(result => {
-                //return res.status( 200 ).json( result );
+        bcrypt.hash(password, 10)
+            .then(hashedPassword => {
+                Users
+                    .updateUserPassword(id, hashedPassword)
+                    .then(result => {
+                        //return res.status( 200 ).json( result );
+                    })
+                    .catch(err => {
+                        res.statusMessage = "Something is wrong with the Database. Try again later.";
+                        return res.status(500).end();
+                    })
+
             })
             .catch(err => {
-                res.statusMessage = "Something is wrong with the Database. Try again later.";
-                return res.status(500).end();
-            })
+                res.statusMessage = err.message;
+                return res.status(400).end();
+            });
     }
 
     Users
@@ -590,6 +595,13 @@ app.get('/products', middleware, (req, res) => {
                         notes: prod.notes
                     }
                 })
+                const filteredComments = result.comments.map(comm => {
+                    return {
+                        user: comm.user,
+                        comment: comm.comment,
+                        date: comm.date
+                    }
+                })
                 return {
                     id: result.id,
                     name: result.name,
@@ -598,7 +610,8 @@ app.get('/products', middleware, (req, res) => {
                     cost: result.cost,
                     price: result.price,
                     stock: result.stock,
-                    components: filteredProducts
+                    components: filteredProducts,
+                    comments: filteredComments
                 }
             });
 
@@ -612,7 +625,7 @@ app.get('/products', middleware, (req, res) => {
         })
 });
 //Get product by name
-app.get('/product', (req, res) => {
+app.get('/product/name', (req, res) => {
     console.log("Getting product by name");
 
     let name = req.query.name;
@@ -634,6 +647,13 @@ app.get('/product', (req, res) => {
                         notes: prod.notes
                     }
                 })
+                const filteredComments = result.comments.map(comm => {
+                    return {
+                        user: comm.user,
+                        comment: comm.comment,
+                        date: comm.date
+                    }
+                })
                 return {
                     id: result.id,
                     name: result.name,
@@ -642,7 +662,8 @@ app.get('/product', (req, res) => {
                     cost: result.cost,
                     price: result.price,
                     stock: result.stock,
-                    components: filteredProducts
+                    components: filteredProducts,
+                    comments: filteredComments
                 }
             });
 
@@ -651,6 +672,57 @@ app.get('/product', (req, res) => {
         .catch(err => {
             res.statusMessage = "Something is wrong with the Database. Try again later.";
             return res.status(500).end();
+        })
+});
+//Get product by id
+app.get('/product/id', (req, res) => {
+    console.log("Getting product by id");
+
+    let id = req.query.id;
+
+    if (!id) {
+        res.statusMessage = "The parameter 'id' is required.";
+        return res.status(406).end();
+    }
+
+    Products
+        .getProductById(id)
+        .then(result => {
+            console.log(result)
+
+            const filteredProducts = result.components.map(prod => {
+                return {
+                    product: prod.component.id,
+                    quantity: prod.quantity,
+                    notes: prod.notes
+                }
+            })
+            const filteredComments = result.comments.map(comm => {
+                return {
+                    user: comm.user,
+                    comment: comm.comment,
+                    date: comm.date
+                }
+            })
+            const filteredResult = {
+                id: result.id,
+                name: result.name,
+                description: result.description,
+                unit: result.unit,
+                cost: result.cost,
+                price: result.price,
+                stock: result.stock,
+                components: filteredProducts,
+                comments: filteredComments
+            }
+
+            return res.status(200).json(filteredResult);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+            //res.statusMessage = "Something is wrong with the Database. Try again later.";
+            //return res.status(500).end();
         })
 });
 //Create new product
@@ -854,6 +926,50 @@ app.patch('/products/components', jsonParser, (req, res) => {
             return res.status(500).end();
         });
 });
+//Add a comment to a product
+app.patch('/products/comments', jsonParser, (req, res) => {
+    console.log('adding a comment to a product')
+    //console.log(req);
+    let productId = req.body.productId;
+    let userId = req.body.userId;
+    let comment = req.body.comment;
+    let date = req.body.date;
+
+    if (!userId || !productId || !comment || !date) {
+        console.log(userId, productId, comment, date);
+        res.statusMessage = "All parameters: 'productId', 'userId', 'date and 'comment' must be sent in the body.";
+        return res.status(406).end();
+    }
+    Users
+        .getUserById(userId)
+        .then(user => {
+            console.log(user)
+            const newComment = {
+                user: user._id,
+                comment,
+                date: date
+            }
+            Products
+                .addProductComment(productId, newComment)
+                .then(result => {
+                    if (result.errmsg) {
+                        res.statusMessage = "The id of that product already exists in the database." +
+                            result.errmsg;
+                        return res.status(409).end();
+                    }
+                    console.log('added product', result);
+                    return res.status(201).json(result);
+                })
+                .catch(err => {
+                    res.statusMessage = err;
+                    return res.status(500).end();
+                });
+        })
+        .catch(err => {
+            res.statusMessage = err;
+            return res.status(500).end();
+        });
+});
 
 //////////////////////////////////BILLS/////////////////////////////////////////////////////////////////
 
@@ -1046,7 +1162,7 @@ app.post('/bills', jsonParser, (req, res) => {
         .getUserById(waiterId)
         .then(waiter => {
             if (!date || !client || !total) {
-                res.statusMessage = "All parameters: 'firstName', 'waiter', 'levle' and 'total' must be sent in the body.";
+                res.statusMessage = "All parameters: 'date', 'client'and 'total' must be sent in the body.";
                 return res.status(406).end();
             }
             if (!waiter) {
@@ -1344,75 +1460,874 @@ app.get('/bill/prueba', (req, res) => {
         })
 });
 
+//////////////////////////////////BILLS CLIENT/////////////////////////////////////////////////////////////////
+
+//Get all the bills
+app.get('/billsClient', middleware, (req, res) => {
+    console.log("Getting the list of bills.");
+
+    BillsClient
+        .getAllBillsClient()
+        .then(results => {
+            //console.log(results)
+            const filteredResults = results.map(result => {
+                //console.log("res  __---",result)
+                const filteredProducts = result.products.map(prod => {
+                    //console.log(prod)
+                    return {
+                        product: prod.product.name,
+                        quantity: prod.quantity,
+                        notes: prod.notes
+                    }
+                })
+                let newClient = ""
+                if (result.client != undefined) {
+                    newClient = `${result.client.firstName} ${result.client.lastName}`
+                }
+                console.log("Total", result.total)
+                return {
+                    id: result.id,
+                    date: result.date,
+                    client: newClient,
+                    total: result.total,
+                    open: result.open,
+                    products: filteredProducts
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            /*res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();*/
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Get open bills
+app.get('/billsClient/open', middleware, (req, res) => {
+    console.log("Getting the list of bills.");
+
+    BillsClient
+        .getBillsClientOpen()
+        .then(results => {
+            //console.log(results)
+            const filteredResults = results.map(result => {
+                console.log(result)
+                const filteredProducts = result.products.map(prod => {
+                    return {
+                        product: prod.product.name,
+                        quantity: prod.quantity,
+                        notes: prod.notes
+                    }
+                })
+                let newClient = ""
+                if (result.client != undefined) {
+                    newClient = `${result.client.firstName} ${result.client.lastName}`
+                }
+                return {
+                    id: result.id,
+                    date: result.date,
+                    client: newClient,
+                    total: result.total,
+                    open: result.open,
+                    products: filteredProducts
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            /*res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();*/
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Get closed bills
+app.get('/billsClient/closed', middleware, (req, res) => {
+    console.log("Getting the list of bills.");
+
+    BillsClient
+        .getBillsClientClosed()
+        .then(results => {
+            //console.log(results)
+            const filteredResults = results.map(result => {
+                console.log(result)
+                const filteredProducts = result.products.map(prod => {
+                    return {
+                        product: prod.product.name,
+                        quantity: prod.quantity,
+                        notes: prod.notes
+                    }
+                })
+                let newClient = ""
+                if (result.client != undefined) {
+                    newClient = `${result.client.firstName} ${result.client.lastName}`
+                }
+                return {
+                    id: result.id,
+                    date: result.date,
+                    client: newClient,
+                    total: result.total,
+                    open: result.open,
+                    products: filteredProducts
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            /*res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();*/
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+/*//Get bill by client
+app.get('/billClient/client/', (req, res) => {
+    console.log("Getting bill by client");
+
+    let client = req.query.client;
+
+    if (!client) {
+        res.statusMessage = "The parameter 'client' is required.";
+        return res.status(406).end();
+    }
+
+    Bills
+        .getBillsByClient(client)
+        .then(results => {
+            const filteredResults = results.map(result => {
+
+                const filteredProducts = result.products.map(prod => {
+                    return {
+                        product: prod.product.name,
+                        stock: prod.stock,
+                        notes: prod.notes
+                    }
+                })
+
+                let newWait = ""
+                if (result.waiter != undefined) {
+                    newWait = `${result.waiter.firstName} ${result.waiter.lastName}`
+                }
+                return {
+                    id: result.id,
+                    date: result.date,
+                    client: result.client,
+                    table: result.table,
+                    products: filteredProducts,
+                    waiter: newWait
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});*/
+//Get bill by date
+app.get('/billClient/date/', (req, res) => {
+    console.log("Getting bill by date");
+
+    let date = req.query.date;
+
+    if (!date) {
+        res.statusMessage = "The parameter 'date' is required.";
+        return res.status(406).end();
+    }
+
+    Bills
+        .getBillsByDate(date)
+        .then(results => {
+            const filteredResults = results.map(result => {
+                const filteredProducts = result.products.map(prod => {
+                    return {
+                        product: prod.product.name,
+                        stock: prod.stock,
+                        notes: prod.notes
+                    }
+                })
+                let newClient = ""
+                if (result.client != undefined) {
+                    newClient = `${result.client.firstName} ${result.client.lastName}`
+                }
+                return {
+                    id: result.id,
+                    date: result.date,
+                    table: result.table,
+                    products: filteredProducts,
+                    client: newClient,
+                    statuts: status
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            /*res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();*/
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Get bill by client
+app.get('/billClient/client/', (req, res) => {
+    console.log("Getting bill by client");
+
+    let client = req.query.client;
+
+    if (!client) {
+        res.statusMessage = "The parameter 'client' is required.";
+        return res.status(406).end();
+    }
+    //console.log(client);
+    Bills
+        .getBillsByWaiter(client)
+        .then(results => {
+            console.log(results)
+            const filteredResults = results.map(result => {
+                const filteredProducts = result.products.map(prod => {
+                    return {
+                        product: prod.product.name,
+                        stock: prod.stock,
+                        notes: prod.notes
+                    }
+                })
+
+                let newWait = ""
+                if (result.client != undefined) {
+                    newWait = `${result.client.firstName} ${result.client.lastName}`
+                }
+                return {
+                    id: result.id,
+                    date: result.date,
+                    client: newWait,
+                    total: result.total,
+                    products: filteredProducts,
+                    open: result.open
+                }
+            });
+
+            return res.status(200).json(filteredResults);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+//Get bill by id
+app.get('/billClient/id', (req, res) => {
+    console.log("Getting bill by id");
+
+    let id = req.query.id;
+
+    if (!id) {
+        res.statusMessage = "The parameter 'id' is required.";
+        return res.status(406).end();
+    }
+
+    BillsClient
+        .getBillsClientById(id)
+        .then(result => {
+            console.log(result)
+
+            const filteredProducts = result.products.map(prod => {
+                return {
+                    product: prod.product.name,
+                    quantity: prod.quantity,
+                    notes: prod.notes
+                }
+            })
+
+            let newWait = ""
+            if (result.client != undefined) {
+                newWait = `${result.client.firstName} ${result.client.lastName}`
+            }
+            const filteredResult = {
+                id: result.id,
+                date: result.date,
+                client: newWait,
+                total: result.total,
+                products: filteredProducts,
+                open: result.open
+            }
+            console.log(filteredResult)
+
+            return res.status(200).json(filteredResult);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+//Add a new bill
+app.post('/billsClient', jsonParser, (req, res) => {
+    console.log('adding a bill')
+    let date = req.body.date;
+    let clientId = req.body.client;
+    let table = req.body.table;
+    let total = Number(req.body.total);
+    let open = req.body.open;
+    console.log(date, clientId, total);
+
+    Users
+        .getUserById(clientId)
+        .then(client => {
+            if (!date) {
+                console.log("date")
+            }
+            if (!clientId) {
+                console.log("id")
+            }
+            if (!total) {
+                console.log("total")
+            }
+            if (!date || !clientId || !total) {
+                console.log(date, clientId, total);
+                res.statusMessage = "All parameters: 'date', 'client'and 'total' must be sent in the body.";
+                return res.status(406).end();
+            }
+            if (!client) {
+                //validations
+            }
+            const newBill = {
+                id: uuid.v4(),
+                date,
+                table,
+                total,
+                client: client._id,
+                open
+            }
+
+            BillsClient
+                .createBill(newBill)
+                .then(result => {
+                    if (result.errmsg) {
+                        res.statusMessage = "The id of that bill already exists in the database." +
+                            result.errmsg;
+                        return res.status(409).end();
+                    }
+                    console.log(result);
+                    return res.status(201).json(result);
+                })
+                .catch(err => {
+                    console.log(err)
+                    res.statusMessage = err;
+                    return res.status(500).end();
+                });
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        });
+});
+//Add a product to a bill
+app.post('/billsClient/products', jsonParser, (req, res) => {
+    console.log('adding a product to a bill')
+    let billId = req.body.billId;
+    let productId = req.body.productId;
+    let quantity = Number(req.body.quantity);
+    let notes = req.body.notes;
+    if (!billId || !productId || !quantity) {
+        res.statusMessage = "All parameters: 'billId', 'productId' and 'quantity' must be sent in the body.";
+        return res.status(406).end();
+    }
+    Products
+        .getProductById(productId)
+        .then(product => {
+            const newProduct = {
+                product: product._id,
+                quantity,
+                notes
+            }
+            console.log("____________________________", newProduct)
+            Bills
+                .addNewProduct(billId, newProduct)
+                .then(result => {
+                    if (result.errmsg) {
+                        res.statusMessage = "The id of that bill already exists in the database." +
+                            result.errmsg;
+                        return res.status(409).end();
+                    }
+                    console.log('added bill', result);
+                    return res.status(201).json(result);
+                })
+                .catch(err => {
+                    res.statusMessage = err;
+                    return res.status(500).end();
+                });
+
+        })
+        .catch(err => {
+            res.statusMessage = err;
+            return res.status(500).end();
+        });
+});
+//Update the quantity of a bill
+app.patch('/billClient/product/:id', jsonParser, (req, res) => {
+    console.log("Patching bill's product by id, ");
+
+    let pId = req.params.id
+    let productId = req.body.productId;
+    let billId = req.body.billId;
+    let quantity = req.body.quantity;
+
+    if (!billId) {
+        res.statusMessage = "The 'billId' must be sent in the body.";
+        return res.status(406).end();
+    }
+
+    if (quantity) {
+        Bills
+            .updateAProductQuantity(billId, productId, quantity)
+            .then(result => {
+                return res.status(200).json(result);
+            })
+            .catch(err => {
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })
+    }
+
+    Bills
+        .getAllBills()
+        .then(result => {
+            return res.status(200).json(result);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+//Delete a bill's product
+app.delete('/billClient/product/:id', jsonParser, (req, res) => {
+    console.log('Deleting bill product');
+
+    let id = req.params.id;
+    let pId = req.body.pId;
+
+    if (!id) {
+        res.statusMessage = "The 'id' must be sent as parameter in the query string.";
+        return res.status(406).end();
+    }
+    if (!pId) {
+        res.statusMessage = "The 'pId' must be sent as parameter in the query string.";
+        return res.status(406).end();
+    }
+
+    console.log(pId)
+    Bills
+        .deleteBillProductById(id, pId)
+        .then(result => {
+            return res.status(200).json(result);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+//Delete a bill
+app.delete('/billClient/:id', (req, res) => {
+    console.log('Deleting bill');
+
+    let id = req.params.id;
+
+    if (!id) {
+        res.statusMessage = "The 'id' must be sent as parameter in the query string.";
+        return res.status(406).end();
+    }
+
+    BillsClient
+        .deleteBillById(id)
+        .then(result => {
+            return res.status(200).json(result);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+//Patch a bill
+app.patch('/billClient/:id', jsonParser, (req, res) => {
+    console.log("Patching bill by id, ");
+
+    let pId = req.params.id
+    let id = req.body.id;
+    let date = req.body.date;
+    let open = req.body.open;
+    let table = req.body.table;
+    let total = Number(req.body.total);
+    let client = req.body.client;
+    let products = req.body.products;
+    console.log(open);
+
+    if (!id) {
+        res.statusMessage = "The 'id' must be sent in the body.";
+        return res.status(406).end();
+    }
+
+    if (date) {
+        BillsClient
+            .updateBillDate(id, date)
+            .then(result => {
+                //return res.status( 200 ).json( result );
+            })
+            .catch(err => {
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })
+    }
+    if (open != undefined) {
+        BillsClient
+            .updateBillOpen(id, open)
+            .then(result => {
+                //return res.status( 200 ).json( result );
+            })
+            .catch(err => {
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })
+    }
+    if (table) {
+        BillsClient
+            .updateBillTable(id, table)
+            .then(result => {
+                //return res.status( 200 ).json( result );
+            })
+            .catch(err => {
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })
+    }
+    if (total) {
+        BillsClient
+            .updateBillTotal(id, total)
+            .then(result => {
+                //return res.status( 200 ).json( result );
+            })
+            .catch(err => {
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })
+    }
+    if (client) {
+        Users
+            .getUserById(clientId)
+            .then(client => {
+                BillsClient
+                    .updateBillWaiter(id, client)
+                    .then(result => {
+                        //return res.status( 200 ).json( result );
+                    })
+                    .catch(err => {
+                        res.statusMessage = "Something is wrong with the Database. Try again later.";
+                        return res.status(500).end();
+                    })
+            })
+            .catch(err => {
+                res.statusMessage = err.message;
+                return res.status(400).end();
+            });
+    }
+    if (products) {
+        console.log(products)
+        let filteredProducts = []
+        products.map(product => {
+            console.log(product.product)
+            Products
+                .getProductById(product.product)
+                .then(res => {
+                    console.log("res", res);
+                    let newProd = {
+                        product: res._id,
+                        quantity: product.quantity,
+                        notes: products.notes
+                    }
+                    console.log('pliesa', filteredProducts)
+                    BillsClient
+                        .addNewProduct(id, newProd)
+                        .then(result => {
+
+                        })
+                        .catch(err => {
+                            console.log(err.message)
+                            res.statusMessage = err.message;
+                            return res.status(400).end();
+                            res.statusMessage = "Something is wrong with the Database. Try again later.";
+                            return res.status(500).end();
+                        })
+                })
+                .catch(err => {
+                    console.log(err.message)
+                    res.statusMessage = err.message;
+                    return res.status(400).end();
+                    res.statusMessage = "Something is wrong with the Database. Try again later.";
+                    return res.status(500).end();
+                })
+        })
+        /*console.log("products",products)
+        console.log("Fproducts",filteredProducts)
+        BillsClient
+            .updateBillProducts(id, filteredProducts)
+            .then(result => {
+                return res.status( 200 ).json( result );
+            })
+            .catch(err => {
+                console.log(err.message)
+                res.statusMessage = err.message;
+                return res.status(400).end();
+                res.statusMessage = "Something is wrong with the Database. Try again later.";
+                return res.status(500).end();
+            })*/
+
+    }
+
+    BillsClient
+        .getAllBillsClient()
+        .then(result => {
+            return res.status(200).json(result);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+
+//probar algo con bill id y product id
+app.get('/billClient/prueba', (req, res) => {
+    console.log("Getting bill's product");
+
+    let bill = req.query.bill;
+    let product = req.query.product;
+
+    if (!bill) {
+        res.statusMessage = "The parameter 'bill' is required.";
+        return res.status(406).end();
+    }
+    if (!product) {
+        res.statusMessage = "The parameter 'bill' is required.";
+        return res.status(406).end();
+    }
+
+    Bills
+        .updateUpdate(bill, product)
+        .then(result => {
+            return res.status(200).json(result);
+        })
+        .catch(err => {
+            res.statusMessage = "Something is wrong with the Database. Try again later.";
+            return res.status(500).end();
+        })
+});
+
+////////////////////////////////////////COMMENTS////////////////////////////////////////////////////////////////////////////////////
+
+//Obtener todos los comentarios
+app.get('/api/comments', (req, res) => {
+    Comments.getAllComments()
+        .then(results => {
+            return res.status(200).json(results);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Agregar un comentario
+app.post('/api/comments', jsonParser, (req, res) => {
+    console.log("Adding a new comment")
+    let id = req.body.id
+    let comment = req.body.comment;
+    let date = req.body.date;
+
+    console.log(id, comment, date);
+
+    if (!id) {
+        res.statusMessage = "You need an 'id'";
+        return res.status(400).end();
+    }
+    if (!comment) {
+        res.statusMessage = "You need the content of the comment";
+        return res.status(400).end();
+    }
+    if (!date) {
+        res.statusMessage = "You need a date";
+        return res.status(400).end();
+    }
+    Users
+        .getUserById(id)
+        .then(result => {
+            let newComment = {
+                id: uuid.v4(),
+                user: result._id,
+                comment,
+                date
+            }
+            Comments
+                .createComment(newComment)
+                .then(results => {
+                    return res.status(200).json(results);
+                })
+                .catch(err => {
+                    res.statusMessage = err.message;
+                    return res.status(400).end();
+                })
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+
+
+
+});
+//Eliminar un comentario
+app.delete('/api/comment', jsonParser, (req, res) => {
+    id = req.body.id;
+    if (!id) {
+        res.statusMessage = "You need an 'id'";
+        return res.status(400).end();
+    }
+    Comments
+        .deleteCommentById(id)
+        .then(result => {
+            return res.status(200).json(results);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Obtener comentarios de una fecha
+app.get('/api/comment', jsonParser, (req, res) => {
+    date = req.body.date;
+    if (!date) {
+        res.statusMessage = "You need a date";
+        return res.status(400).end();
+    }
+    Comments
+        .getCommentsByDate(date)
+        .then(result => {
+            return res.status(200).json(results);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Obtener comentarios de un cliente
+app.get('/api/comment', jsonParser, (req, res) => {
+    user = req.body.user;
+    if (!user) {
+        res.statusMessage = "You need a user";
+        return res.status(400).end();
+    }
+    Comments
+        .getCommentsByUser(user)
+        .then(result => {
+            return res.status(200).json(results);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+});
+//Obtener comentario por id
+app.get('/api/comment', jsonParser, (req, res) => {
+    id = req.body.id;
+    if (!id) {
+        res.statusMessage = "You need a id";
+        return res.status(400).end();
+    }
+    Comments
+        .getCommentsById(id)
+        .then(result => {
+            return res.status(200).json(results);
+        })
+        .catch(err => {
+            res.statusMessage = err.message;
+            return res.status(400).end();
+        })
+
+});
+
 ////////////////////////////////////////AUTHENTICATION////////////////////////////////////////////////////////////////////////////////////
 
 //Validar un usuario
-app.get( '/api/validate-user', ( req, res ) => {
+app.get('/api/validate-user', (req, res) => {
     const { sessiontoken } = req.headers;
 
-    jsonwebtoken.verify( sessiontoken, SECRET_TOKEN, ( err, decoded ) => {
-        if( err ){
+    jsonwebtoken.verify(sessiontoken, SECRET_TOKEN, (err, decoded) => {
+        if (err) {
             res.statusMessage = "Session expired!";
-            return res.status( 400 ).end();
+            return res.status(400).end();
         }
 
-        return res.status( 200 ).json( decoded );
+        return res.status(200).json(decoded);
     });
 });
 //Iniciar sesión
-app.post( '/api/users/login', jsonParser, ( req, res ) => {
+app.post('/api/users/login', jsonParser, (req, res) => {
     let { email, password } = req.body;
 
-    if( !email || !password ){
+    if (!email || !password) {
         res.statusMessage = "Parameter missing in the body of the request.";
-        return res.status( 406 ).end();
+        return res.status(406).end();
     }
 
     Users
-        .getUserByEmail( email )
-        .then( user => {
-
-            if( user ){
-                bcrypt.compare( password, user.password )
-                    .then( result => {
-                        if( result ){
+        .getUserByEmail(email)
+        .then(user => {
+            console.log(user);
+            if (user) {
+                //console.log(password, user.level)
+                bcrypt.compare(password, user.password)
+                    .then(result => {
+                        if (result) {
                             let userData = {
-                                firstName : user.firstName,
-                                lastName : user.lastName,
-                                email : user.email
+                                firstName: user.firstName,
+                                lastName: user.lastName,
+                                email: user.email,
+                                level: user.level,
+                                id: user.id
                             };
-
-                            jsonwebtoken.sign( userData, SECRET_TOKEN, { expiresIn : '1m' }, ( err, token ) => {
-                                if( err ){
+                            jsonwebtoken.sign(userData, SECRET_TOKEN, { expiresIn: '15 days' }, (err, token) => {
+                                if (err) {
                                     res.statusMessage = "Something went wrong with generating the token.";
-                                    return res.status( 400 ).end();
+                                    return res.status(400).end();
                                 }
-                                return res.status( 200 ).json( { token } );
+                                return res.status(200).json({ token });
                             });
                         }
-                        else{
-                            throw new Error( "Invalid credentials" );
+                        else {
+                            throw new Error("Invalid credentials");
                         }
                     })
-                    .catch( err => {
+                    .catch(err => {
                         res.statusMessage = err.message;
-                        return res.status( 400 ).end();
+                        return res.status(400).end();
                     });
             }
-            else{
-                throw new Error( "User doesn't exists!" );
+            else {
+                throw new Error("User doesn't exists!");
             }
         })
-        .catch( err => {
+        .catch(err => {
             res.statusMessage = err.message;
-            return res.status( 400 ).end();
+            return res.status(400).end();
         });
 });
 
 ////////////////////////////////////////conexión del server////////////////////////////////////////////////////////////////////////////////////
 
 app.listen(PORT, () => {
-    console.log("This server is running on port 8080");
+    console.log("This server is running on port", PORT);
 
     new Promise((resolve, reject) => {
 

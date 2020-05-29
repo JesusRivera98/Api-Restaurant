@@ -41,7 +41,22 @@ const productsSchema = mongoose.Schema({
             type: String
         }
     }
-    ]
+    ],
+    comments:[{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'users',
+            required: true
+        },
+        comment: {
+            type: String,
+            required: true
+        },
+        date: {
+            type: Date,
+            required: true
+        }
+    }]
 });
 
 const productsCollection = mongoose.model('products', productsSchema);
@@ -67,10 +82,21 @@ const Products = {
             throw new Error(err);
         });
     },
+    addProductComment: function (id, newComment) {
+        return productsCollection
+        .findOneAndUpdate({id:id},{$push:{ comments: newComment } })
+        .then(addedComment => {
+            return addedComment;
+        })
+        .catch(err => {
+            throw new Error(err);
+        });
+    },
     getAllProducts: function () {
         return productsCollection
             .find()
             .populate('components.component')
+            .populate('comments.user')
             .then(allProducts => {
                 return allProducts;
             })
@@ -82,6 +108,7 @@ const Products = {
         return productsCollection
             .find({ name: new RegExp(name, "i") })
             .populate('components.component')
+            .populate('comments.user')
             .then(namedProducts => {
                 return namedProducts;
             })
@@ -92,6 +119,8 @@ const Products = {
     getProductById: function (id) {
         return productsCollection
             .findOne({ id : id })
+            .populate('components.component')
+            .populate('comments.user')
             .then(idProduct => {
                 return idProduct;
             })

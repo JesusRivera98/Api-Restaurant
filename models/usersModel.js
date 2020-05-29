@@ -90,6 +90,16 @@ const Users = {
                 return err;
             });
     },
+    getUserByEmail : function (value) {
+        return usersCollection
+            .findOne({ email: value })
+            .then(emailedUsers => {
+                return emailedUsers;
+            })
+            .catch(err => {
+                return err;
+            });
+    },
     deleteUserById : function (id) {
         return usersCollection
             .deleteOne({ id: id }, function (err) {

@@ -1,0 +1,13 @@
+Cambiar mesero por cliente
+- login
+- ver todos los productos
+- sistema de filtros
+- sistema de busqueda
+- dejar feedback al producto
+- preparar la orden
+- pagar el bill
+- dejar feedback
+chef
+- ver bills abiertos
+- ver bills cerrados
+- ver ordenes
